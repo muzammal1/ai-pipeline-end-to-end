@@ -1,0 +1,20 @@
+Status: PASS
+Attempts: 1
+
+
+> pipeline-tests@1.0.0 test
+> jest --testEnvironment jsdom --json --outputFile=test-run-raw.json --forceExit --verbose
+
+PASS tests/app.test.js
+  ✓ Add a new todo item via a text input and a button (175 ms)
+  ✓ Mark a todo as complete with strikethrough styling (159 ms)
+  ✓ Delete a todo item (31 ms)
+  ✓ Show a count of remaining incomplete items (92 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        3.652 s, estimated 4 s
+Ran all test suites.
+Test results written to: test-run-raw.json
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

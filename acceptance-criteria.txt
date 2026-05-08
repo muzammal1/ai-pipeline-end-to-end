@@ -1,0 +1,4 @@
+Add a new todo item via a text input and a button
+Mark a todo as complete with strikethrough styling
+Delete a todo item
+Show a count of remaining incomplete items

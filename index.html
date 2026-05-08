@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Todo App</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      width: 100%;
+      max-width: 500px;
+      padding: 32px 28px;
+      align-self: flex-start;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+    }
+
+    #remaining-count {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 24px;
+      min-height: 1.25em;
+    }
+
+    .add-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    #todo-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+      color: #111827;
+      background: #f9fafb;
+    }
+
+    #todo-input:focus {
+      border-color: #6366f1;
+      background: #fff;
+    }
+
+    #add-btn {
+      padding: 10px 20px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    #add-btn:hover { background: #4f46e5; }
+    #add-btn:active { transform: scale(0.97); }
+
+    #todo-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      background: #f9fafb;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .todo-item:hover { border-color: #c7d2fe; background: #fff; }
+
+    .complete-btn {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border: 2px solid #d1d5db;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s, background 0.2s;
+      padding: 0;
+    }
+
+    .complete-btn:hover { border-color: #6366f1; }
+
+    .complete-btn .checkmark {
+      display: none;
+      width: 12px;
+      height: 12px;
+      fill: #fff;
+    }
+
+    .todo-item.done .complete-btn {
+      background: #6366f1;
+      border-color: #6366f1;
+    }
+
+    .todo-item.done .complete-btn .checkmark { display: block; }
+
+    .todo-text {
+      flex: 1;
+      font-size: 1rem;
+      color: #111827;
+      word-break: break-word;
+      transition: color 0.2s;
+    }
+
+    .todo-item.done .todo-text {
+      text-decoration: line-through;
+      color: #9ca3af;
+    }
+
+    .delete-btn {
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #d1d5db;
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .delete-btn:hover { color: #ef4444; background: #fee2e2; }
+
+    .empty-state {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 0.95rem;
+      padding: 24px 0 8px;
+    }
+
+    @media (max-width: 420px) {
+      .card { padding: 24px 16px; }
+      h1 { font-size: 1.4rem; }
+      #add-btn { padding: 10px 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>My Todos</h1>
+    <p id="remaining-count">0 items remaining</p>
+
+    <form class="add-form" id="add-form">
+      <input
+        type="text"
+        id="todo-input"
+        placeholder="What needs to be done?"
+        autocomplete="off"
+        maxlength="200"
+      />
+      <button type="submit" id="add-btn">Add</button>
+    </form>
+
+    <ul id="todo-list"></ul>
+    <p class="empty-state" id="empty-state">No todos yet. Add one above!</p>
+  </div>
+
+  <script>
+    const form = document.getElementById('add-form');
+    const input = document.getElementById('todo-input');
+    const list = document.getElementById('todo-list');
+    const countEl = document.getElementById('remaining-count');
+    const emptyState = document.getElementById('empty-state');
+
+    let todos = [];
+
+    function updateCount() {
+      const remaining = todos.filter(t => !t.done).length;
+      countEl.textContent = remaining === 1 ? '1 item remaining' : `${remaining} items remaining`;
+    }
+
+    function updateEmptyState() {
+      emptyState.style.display = todos.length === 0 ? 'block' : 'none';
+    }
+
+    function renderTodo(todo) {
+      const li = document.createElement('li');
+      li.className = 'todo-item' + (todo.done ? ' done' : '');
+      li.dataset.id = todo.id;
+
+      const completeBtn = document.createElement('button');
+      completeBtn.className = 'complete-btn';
+      completeBtn.setAttribute('aria-label', 'Mark complete');
+      completeBtn.innerHTML = `<svg class="checkmark" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1.5 6l3 3 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>`;
+      completeBtn.addEventListener('click', () => toggleTodo(todo.id));
+
+      const span = document.createElement('span');
+      span.className = 'todo-text';
+      span.textContent = todo.text;
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'delete-btn';
+      deleteBtn.setAttribute('aria-label', 'Delete todo');
+      deleteBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 4h12M6 4V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5V4M5 4l.5 8h5L11 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+      deleteBtn.addEventListener('click', () => deleteTodo(todo.id));
+
+      li.appendChild(completeBtn);
+      li.appendChild(span);
+      li.appendChild(deleteBtn);
+      return li;
+    }
+
+    function render() {
+      list.innerHTML = '';
+      todos.forEach(todo => list.appendChild(renderTodo(todo)));
+      updateCount();
+      updateEmptyState();
+    }
+
+    function addTodo(text) {
+      todos.push({ id: Date.now(), text: text.trim(), done: false });
+      render();
+    }
+
+    function toggleTodo(id) {
+      const todo = todos.find(t => t.id === id);
+      if (todo) todo.done = !todo.done;
+      render();
+    }
+
+    function deleteTodo(id) {
+      todos = todos.filter(t => t.id !== id);
+      render();
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      addTodo(text);
+      input.value = '';
+      input.focus();
+    });
+
+    render();
+  </script>
+</body>
+</html>
