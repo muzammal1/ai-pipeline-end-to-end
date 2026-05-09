@@ -1,4 +1,4 @@
-Display updates when digit buttons are clicked
-Evaluate expression when equals button is pressed and show result
-Clear button resets the display to zero
-Basic operations work: addition, subtraction, multiplication, division
+Add a todo item via a text input and a button
+Mark a todo as complete with strikethrough styling
+Delete a todo item
+Show count of remaining incomplete items
