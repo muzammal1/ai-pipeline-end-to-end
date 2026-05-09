@@ -1,86 +1,62 @@
+require('@testing-library/jest-dom');
 const fs = require('fs');
 const path = require('path');
-const { fireEvent } = require('@testing-library/dom');
-require('@testing-library/jest-dom');
-
-function loadApp() {
-  document.body.innerHTML = fs.readFileSync(
-    path.resolve(__dirname, '../index.html'),
-    'utf8'
-  );
-  // jsdom does not execute scripts set via innerHTML; run the inline script manually.
-  // new Function avoids let/const re-declaration errors across beforeEach resets.
-  const script = document.querySelector('script');
-  // eslint-disable-next-line no-new-func
-  new Function(script.textContent)();
-}
-
-function click(selector) {
-  fireEvent.click(document.querySelector(selector));
-}
-
-function display() {
-  return document.getElementById('current');
-}
 
 beforeEach(() => {
-  loadApp();
+  document.body.innerHTML = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  document.querySelectorAll('script').forEach(s => {
+    if (s.textContent) eval(s.textContent + '\nif(typeof toggleUnit==="function")window.toggleUnit=toggleUnit;');
+  });
 });
 
-test('Display updates when digit buttons are clicked', () => {
-  click('[data-digit="5"]');
-  expect(display()).toHaveTextContent('5');
-
-  click('[data-digit="3"]');
-  expect(display()).toHaveTextContent('53');
+test('City name and temperature are visible on load', () => {
+  const cityName = document.getElementById('cityName');
+  const currentTemp = document.getElementById('currentTemp');
+  expect(cityName).toBeInTheDocument();
+  expect(cityName.textContent).toBe('New York');
+  expect(currentTemp).toBeInTheDocument();
+  expect(currentTemp.textContent).toBe('22');
 });
 
-test('Evaluate expression when equals button is pressed and show result', () => {
-  click('[data-digit="2"]');
-  click('[data-op="+"]');
-  click('[data-digit="3"]');
-  click('[data-action="equals"]');
-  expect(display()).toHaveTextContent('5');
+test('Weather condition with emoji icon is displayed', () => {
+  expect(document.getElementById('conditionLabel').textContent).toBe('Sunny');
+  expect(document.getElementById('conditionIcon').textContent).toBe('☀️');
 });
 
-test('Clear button resets the display to zero', () => {
-  click('[data-digit="7"]');
-  click('[data-digit="8"]');
-  expect(display()).toHaveTextContent('78');
-
-  click('[data-action="clear"]');
-  expect(display()).toHaveTextContent('0');
+test('High and low temperatures are shown', () => {
+  expect(document.getElementById('highTemp').textContent).toBe('26°');
+  expect(document.getElementById('lowTemp').textContent).toBe('17°');
 });
 
-test('Basic operations work: addition, subtraction, multiplication, division', () => {
-  // Addition: 6 + 3 = 9
-  click('[data-digit="6"]');
-  click('[data-op="+"]');
-  click('[data-digit="3"]');
-  click('[data-action="equals"]');
-  expect(display()).toHaveTextContent('9');
+test('Toggle button switches between Celsius and Fahrenheit correctly', () => {
+  jest.useFakeTimers();
 
-  // Subtraction: 9 - 4 = 5
-  click('[data-action="clear"]');
-  click('[data-digit="9"]');
-  click('[data-op="-"]');
-  click('[data-digit="4"]');
-  click('[data-action="equals"]');
-  expect(display()).toHaveTextContent('5');
+  const toggleBtn = document.getElementById('toggleBtn');
 
-  // Multiplication: 4 × 3 = 12
-  click('[data-action="clear"]');
-  click('[data-digit="4"]');
-  click('[data-op="*"]');
-  click('[data-digit="3"]');
-  click('[data-action="equals"]');
-  expect(display()).toHaveTextContent('12');
+  // Initial state is Celsius
+  expect(document.getElementById('unitLabel').textContent).toBe('°C');
+  expect(document.getElementById('currentTemp').textContent).toBe('22');
+  expect(toggleBtn.textContent).toBe('Switch to °F');
 
-  // Division: 8 ÷ 2 = 4
-  click('[data-action="clear"]');
-  click('[data-digit="8"]');
-  click('[data-op="/"]');
-  click('[data-digit="2"]');
-  click('[data-action="equals"]');
-  expect(display()).toHaveTextContent('4');
+  // Click once → Fahrenheit
+  toggleBtn.click();
+  jest.runAllTimers();
+
+  expect(document.getElementById('unitLabel').textContent).toBe('°F');
+  expect(document.getElementById('currentTemp').textContent).toBe('72');
+  expect(document.getElementById('highTemp').textContent).toBe('79°');
+  expect(document.getElementById('lowTemp').textContent).toBe('63°');
+  expect(toggleBtn.textContent).toBe('Switch to °C');
+
+  // Click again → back to Celsius
+  toggleBtn.click();
+  jest.runAllTimers();
+
+  expect(document.getElementById('unitLabel').textContent).toBe('°C');
+  expect(document.getElementById('currentTemp').textContent).toBe('22');
+  expect(document.getElementById('highTemp').textContent).toBe('26°');
+  expect(document.getElementById('lowTemp').textContent).toBe('17°');
+  expect(toggleBtn.textContent).toBe('Switch to °F');
+
+  jest.useRealTimers();
 });

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calculator</title>
+  <title>Weather Card</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -12,242 +12,236 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #1a1a2e;
-      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      padding: 16px;
     }
 
-    .calculator {
-      background: #16213e;
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      width: 320px;
+    .card {
+      width: 100%;
+      max-width: 360px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 28px;
+      padding: 36px 32px 28px;
+      color: #fff;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.05);
+      min-width: 0;
     }
 
-    .display {
-      background: #0f3460;
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-bottom: 20px;
-      text-align: right;
-      overflow: hidden;
+    .location-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 28px;
     }
 
-    .display .expression {
-      color: #a8b2d8;
+    .pin-icon {
       font-size: 14px;
-      min-height: 20px;
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      opacity: 0.7;
     }
 
-    .display .current {
-      color: #e2e8f0;
-      font-size: 36px;
+    .city-name {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+
+    .weather-main {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .temperature-display {
+      line-height: 1;
+    }
+
+    .temp-value {
+      font-size: 88px;
+      font-weight: 200;
+      letter-spacing: -4px;
+      line-height: 1;
+    }
+
+    .temp-unit {
+      font-size: 32px;
       font-weight: 300;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      vertical-align: super;
+      margin-left: 2px;
+      opacity: 0.8;
     }
 
-    .buttons {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
+    .condition-icon {
+      font-size: 72px;
+      line-height: 1;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+      transition: transform 0.3s ease;
     }
 
-    button {
-      border: none;
-      border-radius: 10px;
+    .condition-icon:hover { transform: scale(1.08); }
+
+    .condition-label {
       font-size: 20px;
-      font-weight: 500;
-      padding: 18px 0;
+      font-weight: 300;
+      letter-spacing: 0.02em;
+      opacity: 0.9;
+      margin-bottom: 28px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      margin-bottom: 20px;
+    }
+
+    .hi-lo {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-bottom: 28px;
+    }
+
+    .hi-lo-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .hi-lo-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.5;
+    }
+
+    .hi-lo-value {
+      font-size: 22px;
+      font-weight: 400;
+    }
+
+    .hi-lo-value.high { color: #fbbf24; }
+    .hi-lo-value.low  { color: #93c5fd; }
+
+    .toggle-btn {
+      width: 100%;
+      padding: 14px;
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.07);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       cursor: pointer;
-      transition: transform 0.08s, filter 0.08s;
-      user-select: none;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
     }
 
-    button:active { transform: scale(0.93); filter: brightness(0.85); }
-
-    .btn-digit {
-      background: #1a1a4e;
-      color: #e2e8f0;
+    .toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.45);
     }
 
-    .btn-operator {
-      background: #e94560;
-      color: #fff;
+    .toggle-btn:active { transform: scale(0.98); }
+
+    .temp-value,
+    .hi-lo-value {
+      transition: opacity 0.2s ease;
     }
 
-    .btn-clear {
-      background: #533483;
-      color: #fff;
+    .fade {
+      opacity: 0;
     }
 
-    .btn-equals {
-      background: #e94560;
-      color: #fff;
-      grid-column: span 2;
-    }
-
-    .btn-zero { grid-column: span 2; }
-
-    @media (max-width: 375px) {
-      .calculator { width: 100%; border-radius: 0; padding: 16px; }
+    @media (max-width: 400px) {
+      .card { padding: 28px 22px 22px; }
+      .temp-value { font-size: 72px; }
+      .condition-icon { font-size: 56px; }
     }
   </style>
 </head>
 <body>
-  <div class="calculator">
-    <div class="display">
-      <div class="expression" id="expression"></div>
-      <div class="current" id="current">0</div>
+
+<div class="card">
+  <div class="location-row">
+    <span class="pin-icon">📍</span>
+    <span class="city-name" id="cityName">New York</span>
+  </div>
+
+  <div class="weather-main">
+    <div class="temperature-display">
+      <span class="temp-value" id="currentTemp">22</span><span class="temp-unit" id="unitLabel">°C</span>
     </div>
-    <div class="buttons">
-      <button class="btn-clear" data-action="clear">C</button>
-      <button class="btn-operator" data-action="sign">+/-</button>
-      <button class="btn-operator" data-action="percent">%</button>
-      <button class="btn-operator" data-op="/">÷</button>
+    <span class="condition-icon" id="conditionIcon">☀️</span>
+  </div>
 
-      <button class="btn-digit" data-digit="7">7</button>
-      <button class="btn-digit" data-digit="8">8</button>
-      <button class="btn-digit" data-digit="9">9</button>
-      <button class="btn-operator" data-op="*">×</button>
+  <div class="condition-label" id="conditionLabel">Sunny</div>
 
-      <button class="btn-digit" data-digit="4">4</button>
-      <button class="btn-digit" data-digit="5">5</button>
-      <button class="btn-digit" data-digit="6">6</button>
-      <button class="btn-operator" data-op="-">−</button>
+  <hr class="divider" />
 
-      <button class="btn-digit" data-digit="1">1</button>
-      <button class="btn-digit" data-digit="2">2</button>
-      <button class="btn-digit" data-digit="3">3</button>
-      <button class="btn-operator" data-op="+">+</button>
-
-      <button class="btn-digit btn-zero" data-digit="0">0</button>
-      <button class="btn-digit" data-digit=".">.</button>
-      <button class="btn-equals" data-action="equals">=</button>
+  <div class="hi-lo">
+    <div class="hi-lo-item">
+      <span class="hi-lo-label">High</span>
+      <span class="hi-lo-value high" id="highTemp">26°</span>
+    </div>
+    <div class="hi-lo-item">
+      <span class="hi-lo-label">Low</span>
+      <span class="hi-lo-value low" id="lowTemp">17°</span>
     </div>
   </div>
 
-  <script>
-    const currentEl = document.getElementById('current');
-    const expressionEl = document.getElementById('expression');
+  <button class="toggle-btn" id="toggleBtn" onclick="toggleUnit()">Switch to °F</button>
+</div>
 
-    let state = {
-      display: '0',
-      operand: null,
-      operator: null,
-      waitingForOperand: false,
-    };
+<script>
+  const data = {
+    city: 'New York',
+    condition: 'Sunny',
+    emoji: '☀️',
+    celsius: { current: 22, high: 26, low: 17 }
+  };
 
-    function updateDisplay() {
-      currentEl.textContent = state.display;
-      if (state.operator && state.operand !== null) {
-        const opSymbol = { '+': '+', '-': '−', '*': '×', '/': '÷' }[state.operator];
-        expressionEl.textContent = `${formatNum(state.operand)} ${opSymbol}`;
+  let isCelsius = true;
+
+  function toF(c) { return Math.round(c * 9 / 5 + 32); }
+
+  function toggleUnit() {
+    isCelsius = !isCelsius;
+
+    const tempEls = [
+      document.getElementById('currentTemp'),
+      document.getElementById('highTemp'),
+      document.getElementById('lowTemp')
+    ];
+
+    tempEls.forEach(el => el.classList.add('fade'));
+
+    setTimeout(() => {
+      if (isCelsius) {
+        document.getElementById('currentTemp').textContent = data.celsius.current;
+        document.getElementById('highTemp').textContent   = data.celsius.high + '°';
+        document.getElementById('lowTemp').textContent    = data.celsius.low  + '°';
+        document.getElementById('unitLabel').textContent  = '°C';
+        document.getElementById('toggleBtn').textContent  = 'Switch to °F';
       } else {
-        expressionEl.textContent = '';
+        document.getElementById('currentTemp').textContent = toF(data.celsius.current);
+        document.getElementById('highTemp').textContent    = toF(data.celsius.high) + '°';
+        document.getElementById('lowTemp').textContent     = toF(data.celsius.low)  + '°';
+        document.getElementById('unitLabel').textContent   = '°F';
+        document.getElementById('toggleBtn').textContent   = 'Switch to °C';
       }
-    }
+      tempEls.forEach(el => el.classList.remove('fade'));
+    }, 180);
+  }
+</script>
 
-    function formatNum(n) {
-      const s = String(n);
-      return s.length > 12 ? parseFloat(n.toPrecision(10)).toString() : s;
-    }
-
-    function inputDigit(digit) {
-      if (state.waitingForOperand) {
-        state.display = digit === '.' ? '0.' : digit;
-        state.waitingForOperand = false;
-      } else {
-        if (digit === '.' && state.display.includes('.')) return;
-        state.display = state.display === '0' && digit !== '.' ? digit : state.display + digit;
-      }
-      if (state.display.length > 12) return;
-      updateDisplay();
-    }
-
-    function chooseOperator(op) {
-      const current = parseFloat(state.display);
-      if (state.operand !== null && !state.waitingForOperand) {
-        const result = calculate(state.operand, current, state.operator);
-        state.display = formatNum(result);
-        state.operand = result;
-      } else {
-        state.operand = current;
-      }
-      state.operator = op;
-      state.waitingForOperand = true;
-      updateDisplay();
-    }
-
-    function calculate(a, b, op) {
-      switch (op) {
-        case '+': return a + b;
-        case '-': return a - b;
-        case '*': return a * b;
-        case '/': return b === 0 ? 'Error' : a / b;
-      }
-    }
-
-    function equals() {
-      if (state.operator === null || state.operand === null) return;
-      const current = parseFloat(state.display);
-      const result = calculate(state.operand, current, state.operator);
-      expressionEl.textContent = `${formatNum(state.operand)} ${{ '+': '+', '-': '−', '*': '×', '/': '÷' }[state.operator]} ${formatNum(current)} =`;
-      state.display = result === 'Error' ? 'Error' : formatNum(result);
-      state.operand = null;
-      state.operator = null;
-      state.waitingForOperand = true;
-      currentEl.textContent = state.display;
-    }
-
-    function clear() {
-      state = { display: '0', operand: null, operator: null, waitingForOperand: false };
-      updateDisplay();
-    }
-
-    document.querySelector('.buttons').addEventListener('click', (e) => {
-      const btn = e.target.closest('button');
-      if (!btn) return;
-
-      if (btn.dataset.digit !== undefined) {
-        inputDigit(btn.dataset.digit);
-      } else if (btn.dataset.op) {
-        chooseOperator(btn.dataset.op);
-      } else if (btn.dataset.action === 'equals') {
-        equals();
-      } else if (btn.dataset.action === 'clear') {
-        clear();
-      } else if (btn.dataset.action === 'sign') {
-        state.display = String(parseFloat(state.display) * -1);
-        updateDisplay();
-      } else if (btn.dataset.action === 'percent') {
-        state.display = String(parseFloat(state.display) / 100);
-        updateDisplay();
-      }
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key >= '0' && e.key <= '9') inputDigit(e.key);
-      else if (e.key === '.') inputDigit('.');
-      else if (e.key === '+') chooseOperator('+');
-      else if (e.key === '-') chooseOperator('-');
-      else if (e.key === '*') chooseOperator('*');
-      else if (e.key === '/') { e.preventDefault(); chooseOperator('/'); }
-      else if (e.key === 'Enter' || e.key === '=') equals();
-      else if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') clear();
-      else if (e.key === 'Backspace') {
-        if (state.display.length > 1) state.display = state.display.slice(0, -1);
-        else state.display = '0';
-        updateDisplay();
-      }
-    });
-
-    updateDisplay();
-  </script>
 </body>
 </html>
