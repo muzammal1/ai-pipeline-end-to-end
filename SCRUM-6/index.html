@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Todo App</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .app {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      width: 100%;
+      max-width: 480px;
+      height: fit-content;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 0.25rem;
+    }
+
+    .count {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 1.5rem;
+    }
+
+    .count span {
+      font-weight: 600;
+      color: #4f46e5;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    #todo-input {
+      flex: 1;
+      padding: 0.625rem 0.875rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #111827;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    #todo-input:focus { border-color: #4f46e5; }
+    #todo-input::placeholder { color: #9ca3af; }
+
+    #add-btn {
+      padding: 0.625rem 1.1rem;
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    #add-btn:hover { background: #4338ca; }
+    #add-btn:active { background: #3730a3; }
+
+    .todo-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0.875rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fafafa;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .todo-item:hover { background: #f3f4f6; border-color: #d1d5db; }
+
+    .todo-item.done { background: #f9fafb; }
+
+    .todo-checkbox {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: #4f46e5;
+    }
+
+    .todo-text {
+      flex: 1;
+      font-size: 0.95rem;
+      color: #111827;
+      word-break: break-word;
+      transition: color 0.15s;
+    }
+
+    .todo-item.done .todo-text {
+      text-decoration: line-through;
+      color: #9ca3af;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #d1d5db;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 0.2rem 0.3rem;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .delete-btn:hover { color: #ef4444; background: #fee2e2; }
+
+    .empty {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 0.9rem;
+      padding: 2rem 0;
+    }
+
+    @media (max-width: 375px) {
+      .app { padding: 1.25rem; }
+      h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>My Todos</h1>
+    <p class="count"><span id="remaining">0</span> item(s) remaining</p>
+
+    <div class="input-row">
+      <input id="todo-input" type="text" placeholder="Add a new todo…" maxlength="200" />
+      <button id="add-btn">Add</button>
+    </div>
+
+    <ul class="todo-list" id="todo-list">
+      <li class="empty" id="empty-msg">No todos yet. Add one above!</li>
+    </ul>
+  </div>
+
+  <script>
+    const input = document.getElementById('todo-input');
+    const addBtn = document.getElementById('add-btn');
+    const list = document.getElementById('todo-list');
+    const remainingEl = document.getElementById('remaining');
+    const emptyMsg = document.getElementById('empty-msg');
+
+    let todos = [];
+    let nextId = 1;
+
+    function updateCount() {
+      const incomplete = todos.filter(t => !t.done).length;
+      remainingEl.textContent = incomplete;
+    }
+
+    function renderTodos() {
+      const items = list.querySelectorAll('.todo-item');
+      items.forEach(el => el.remove());
+
+      emptyMsg.style.display = todos.length === 0 ? 'block' : 'none';
+
+      todos.forEach(todo => {
+        const li = document.createElement('li');
+        li.className = 'todo-item' + (todo.done ? ' done' : '');
+        li.dataset.id = todo.id;
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'todo-checkbox';
+        cb.checked = todo.done;
+        cb.setAttribute('aria-label', 'Mark complete');
+        cb.addEventListener('change', () => toggleTodo(todo.id));
+
+        const span = document.createElement('span');
+        span.className = 'todo-text';
+        span.textContent = todo.text;
+
+        const del = document.createElement('button');
+        del.className = 'delete-btn';
+        del.textContent = '✕';
+        del.setAttribute('aria-label', 'Delete todo');
+        del.addEventListener('click', () => deleteTodo(todo.id));
+
+        li.append(cb, span, del);
+        list.appendChild(li);
+      });
+
+      updateCount();
+    }
+
+    function addTodo() {
+      const text = input.value.trim();
+      if (!text) return;
+      todos.push({ id: nextId++, text, done: false });
+      input.value = '';
+      renderTodos();
+      input.focus();
+    }
+
+    function toggleTodo(id) {
+      const todo = todos.find(t => t.id === id);
+      if (todo) {
+        todo.done = !todo.done;
+        renderTodos();
+      }
+    }
+
+    function deleteTodo(id) {
+      todos = todos.filter(t => t.id !== id);
+      renderTodos();
+    }
+
+    addBtn.addEventListener('click', addTodo);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
+
+    renderTodos();
+  </script>
+</body>
+</html>
