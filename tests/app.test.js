@@ -1,86 +1,80 @@
+require('@testing-library/jest-dom');
 const fs = require('fs');
 const path = require('path');
-const { fireEvent } = require('@testing-library/dom');
-require('@testing-library/jest-dom');
-
-function loadApp() {
-  document.body.innerHTML = fs.readFileSync(
-    path.resolve(__dirname, '../index.html'),
-    'utf8'
-  );
-  // jsdom does not execute scripts set via innerHTML; run the inline script manually.
-  // new Function avoids let/const re-declaration errors across beforeEach resets.
-  const script = document.querySelector('script');
-  // eslint-disable-next-line no-new-func
-  new Function(script.textContent)();
-}
-
-function click(selector) {
-  fireEvent.click(document.querySelector(selector));
-}
-
-function display() {
-  return document.getElementById('current');
-}
 
 beforeEach(() => {
-  loadApp();
+  document.body.innerHTML = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  document.querySelectorAll('script').forEach(s => { if (s.textContent) eval(s.textContent); });
 });
 
-test('Display updates when digit buttons are clicked', () => {
-  click('[data-digit="5"]');
-  expect(display()).toHaveTextContent('5');
+test('Add a todo item via a text input and a button', () => {
+  const input = document.getElementById('todo-input');
+  const addBtn = document.getElementById('add-btn');
+  const list = document.getElementById('todo-list');
 
-  click('[data-digit="3"]');
-  expect(display()).toHaveTextContent('53');
+  input.value = 'Buy groceries';
+  input.dispatchEvent(new Event('input'));
+  addBtn.click();
+
+  const items = list.querySelectorAll('li:not(.empty)');
+  expect(items.length).toBe(1);
+  expect(items[0].querySelector('.todo-text').textContent).toBe('Buy groceries');
 });
 
-test('Evaluate expression when equals button is pressed and show result', () => {
-  click('[data-digit="2"]');
-  click('[data-op="+"]');
-  click('[data-digit="3"]');
-  click('[data-action="equals"]');
-  expect(display()).toHaveTextContent('5');
+test('Mark a todo as complete with strikethrough styling', () => {
+  const input = document.getElementById('todo-input');
+  const addBtn = document.getElementById('add-btn');
+  const list = document.getElementById('todo-list');
+
+  input.value = 'Walk the dog';
+  input.dispatchEvent(new Event('input'));
+  addBtn.click();
+
+  const checkbox = list.querySelector('.todo-checkbox');
+  checkbox.checked = true;
+  checkbox.dispatchEvent(new Event('change'));
+
+  const li = list.querySelector('li');
+  expect(li).toHaveClass('done');
+  expect(li.querySelector('.todo-text')).toHaveStyle('text-decoration: line-through');
 });
 
-test('Clear button resets the display to zero', () => {
-  click('[data-digit="7"]');
-  click('[data-digit="8"]');
-  expect(display()).toHaveTextContent('78');
+test('Delete a todo item', () => {
+  const input = document.getElementById('todo-input');
+  const addBtn = document.getElementById('add-btn');
+  const list = document.getElementById('todo-list');
 
-  click('[data-action="clear"]');
-  expect(display()).toHaveTextContent('0');
+  input.value = 'Read a book';
+  input.dispatchEvent(new Event('input'));
+  addBtn.click();
+
+  expect(list.querySelectorAll('li:not(.empty)').length).toBe(1);
+
+  const deleteBtn = list.querySelector('.delete-btn');
+  deleteBtn.click();
+
+  expect(list.querySelectorAll('li:not(.empty)').length).toBe(0);
 });
 
-test('Basic operations work: addition, subtraction, multiplication, division', () => {
-  // Addition: 6 + 3 = 9
-  click('[data-digit="6"]');
-  click('[data-op="+"]');
-  click('[data-digit="3"]');
-  click('[data-action="equals"]');
-  expect(display()).toHaveTextContent('9');
+test('Show count of remaining incomplete items', () => {
+  const input = document.getElementById('todo-input');
+  const addBtn = document.getElementById('add-btn');
+  const list = document.getElementById('todo-list');
+  const remaining = document.getElementById('remaining');
 
-  // Subtraction: 9 - 4 = 5
-  click('[data-action="clear"]');
-  click('[data-digit="9"]');
-  click('[data-op="-"]');
-  click('[data-digit="4"]');
-  click('[data-action="equals"]');
-  expect(display()).toHaveTextContent('5');
+  input.value = 'Task one';
+  input.dispatchEvent(new Event('input'));
+  addBtn.click();
 
-  // Multiplication: 4 × 3 = 12
-  click('[data-action="clear"]');
-  click('[data-digit="4"]');
-  click('[data-op="*"]');
-  click('[data-digit="3"]');
-  click('[data-action="equals"]');
-  expect(display()).toHaveTextContent('12');
+  input.value = 'Task two';
+  input.dispatchEvent(new Event('input'));
+  addBtn.click();
 
-  // Division: 8 ÷ 2 = 4
-  click('[data-action="clear"]');
-  click('[data-digit="8"]');
-  click('[data-op="/"]');
-  click('[data-digit="2"]');
-  click('[data-action="equals"]');
-  expect(display()).toHaveTextContent('4');
+  expect(remaining.textContent).toBe('2');
+
+  const checkbox = list.querySelector('.todo-checkbox');
+  checkbox.checked = true;
+  checkbox.dispatchEvent(new Event('change'));
+
+  expect(remaining.textContent).toBe('1');
 });

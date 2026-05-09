@@ -3,251 +3,244 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calculator</title>
+  <title>Todo App</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f2f5;
       min-height: 100vh;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      background: #1a1a2e;
-      font-family: 'Segoe UI', sans-serif;
+      padding: 40px 16px;
     }
 
-    .calculator {
-      background: #16213e;
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      width: 320px;
-    }
-
-    .display {
-      background: #0f3460;
+    .card {
+      background: #fff;
       border-radius: 12px;
-      padding: 16px 20px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 520px;
+      padding: 32px 28px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 24px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
       margin-bottom: 20px;
-      text-align: right;
-      overflow: hidden;
     }
 
-    .display .expression {
-      color: #a8b2d8;
-      font-size: 14px;
-      min-height: 20px;
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    #todo-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #1a1a2e;
+      transition: border-color 0.2s;
+      outline: none;
     }
 
-    .display .current {
-      color: #e2e8f0;
-      font-size: 36px;
-      font-weight: 300;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+    #todo-input:focus { border-color: #6366f1; }
 
-    .buttons {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
-
-    button {
+    #add-btn {
+      padding: 10px 20px;
+      background: #6366f1;
+      color: #fff;
       border: none;
-      border-radius: 10px;
-      font-size: 20px;
-      font-weight: 500;
-      padding: 18px 0;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
       cursor: pointer;
-      transition: transform 0.08s, filter 0.08s;
-      user-select: none;
+      white-space: nowrap;
+      transition: background 0.2s;
     }
 
-    button:active { transform: scale(0.93); filter: brightness(0.85); }
+    #add-btn:hover { background: #4f46e5; }
+    #add-btn:active { background: #4338ca; }
 
-    .btn-digit {
-      background: #1a1a4e;
-      color: #e2e8f0;
+    .count {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin-bottom: 16px;
     }
 
-    .btn-operator {
-      background: #e94560;
-      color: #fff;
+    .count span { font-weight: 700; color: #1a1a2e; }
+
+    #todo-list {
+      list-style: none;
     }
 
-    .btn-clear {
-      background: #533483;
-      color: #fff;
+    #todo-list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: #f8fafc;
+      margin-bottom: 10px;
+      transition: background 0.15s;
     }
 
-    .btn-equals {
-      background: #e94560;
-      color: #fff;
-      grid-column: span 2;
+    #todo-list li:last-child { margin-bottom: 0; }
+    #todo-list li:hover { background: #f1f5f9; }
+
+    .todo-checkbox {
+      width: 20px;
+      height: 20px;
+      accent-color: #6366f1;
+      cursor: pointer;
+      flex-shrink: 0;
     }
 
-    .btn-zero { grid-column: span 2; }
+    .todo-text {
+      flex: 1;
+      font-size: 1rem;
+      color: #1a1a2e;
+      word-break: break-word;
+      transition: color 0.2s;
+    }
+
+    li.done .todo-text {
+      text-decoration: line-through;
+      color: #94a3b8;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .delete-btn:hover { color: #ef4444; background: #fee2e2; }
+
+    .empty {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      padding: 24px 0;
+    }
 
     @media (max-width: 375px) {
-      .calculator { width: 100%; border-radius: 0; padding: 16px; }
+      .card { padding: 24px 16px; }
+      h1 { font-size: 1.3rem; }
+      #add-btn { padding: 10px 14px; }
     }
   </style>
 </head>
 <body>
-  <div class="calculator">
-    <div class="display">
-      <div class="expression" id="expression"></div>
-      <div class="current" id="current">0</div>
+  <div class="card">
+    <h1>Todo List</h1>
+
+    <div class="input-row">
+      <input
+        id="todo-input"
+        type="text"
+        placeholder="Add a new todo…"
+        maxlength="200"
+        autocomplete="off"
+      />
+      <button id="add-btn">Add</button>
     </div>
-    <div class="buttons">
-      <button class="btn-clear" data-action="clear">C</button>
-      <button class="btn-operator" data-action="sign">+/-</button>
-      <button class="btn-operator" data-action="percent">%</button>
-      <button class="btn-operator" data-op="/">÷</button>
 
-      <button class="btn-digit" data-digit="7">7</button>
-      <button class="btn-digit" data-digit="8">8</button>
-      <button class="btn-digit" data-digit="9">9</button>
-      <button class="btn-operator" data-op="*">×</button>
+    <p class="count"><span id="remaining">0</span> item(s) remaining</p>
 
-      <button class="btn-digit" data-digit="4">4</button>
-      <button class="btn-digit" data-digit="5">5</button>
-      <button class="btn-digit" data-digit="6">6</button>
-      <button class="btn-operator" data-op="-">−</button>
-
-      <button class="btn-digit" data-digit="1">1</button>
-      <button class="btn-digit" data-digit="2">2</button>
-      <button class="btn-digit" data-digit="3">3</button>
-      <button class="btn-operator" data-op="+">+</button>
-
-      <button class="btn-digit btn-zero" data-digit="0">0</button>
-      <button class="btn-digit" data-digit=".">.</button>
-      <button class="btn-equals" data-action="equals">=</button>
-    </div>
+    <ul id="todo-list"></ul>
   </div>
 
   <script>
-    const currentEl = document.getElementById('current');
-    const expressionEl = document.getElementById('expression');
+    const input = document.getElementById('todo-input');
+    const addBtn = document.getElementById('add-btn');
+    const list = document.getElementById('todo-list');
+    const remainingEl = document.getElementById('remaining');
 
-    let state = {
-      display: '0',
-      operand: null,
-      operator: null,
-      waitingForOperand: false,
-    };
+    let todos = [];
 
-    function updateDisplay() {
-      currentEl.textContent = state.display;
-      if (state.operator && state.operand !== null) {
-        const opSymbol = { '+': '+', '-': '−', '*': '×', '/': '÷' }[state.operator];
-        expressionEl.textContent = `${formatNum(state.operand)} ${opSymbol}`;
-      } else {
-        expressionEl.textContent = '';
+    function updateCount() {
+      const n = todos.filter(t => !t.done).length;
+      remainingEl.textContent = n;
+    }
+
+    function render() {
+      list.innerHTML = '';
+
+      if (todos.length === 0) {
+        const empty = document.createElement('li');
+        empty.className = 'empty';
+        empty.style.listStyle = 'none';
+        empty.textContent = 'No todos yet. Add one above!';
+        list.appendChild(empty);
+        updateCount();
+        return;
       }
+
+      todos.forEach((todo, index) => {
+        const li = document.createElement('li');
+        if (todo.done) li.classList.add('done');
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'todo-checkbox';
+        checkbox.checked = todo.done;
+        checkbox.setAttribute('aria-label', 'Mark complete');
+        checkbox.addEventListener('change', () => {
+          todos[index].done = checkbox.checked;
+          render();
+        });
+
+        const span = document.createElement('span');
+        span.className = 'todo-text';
+        span.textContent = todo.text;
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'delete-btn';
+        delBtn.textContent = '✕';
+        delBtn.setAttribute('aria-label', 'Delete todo');
+        delBtn.addEventListener('click', () => {
+          todos.splice(index, 1);
+          render();
+        });
+
+        li.appendChild(checkbox);
+        li.appendChild(span);
+        li.appendChild(delBtn);
+        list.appendChild(li);
+      });
+
+      updateCount();
     }
 
-    function formatNum(n) {
-      const s = String(n);
-      return s.length > 12 ? parseFloat(n.toPrecision(10)).toString() : s;
+    function addTodo() {
+      const text = input.value.trim();
+      if (!text) return;
+      todos.push({ text, done: false });
+      input.value = '';
+      input.focus();
+      render();
     }
 
-    function inputDigit(digit) {
-      if (state.waitingForOperand) {
-        state.display = digit === '.' ? '0.' : digit;
-        state.waitingForOperand = false;
-      } else {
-        if (digit === '.' && state.display.includes('.')) return;
-        state.display = state.display === '0' && digit !== '.' ? digit : state.display + digit;
-      }
-      if (state.display.length > 12) return;
-      updateDisplay();
-    }
-
-    function chooseOperator(op) {
-      const current = parseFloat(state.display);
-      if (state.operand !== null && !state.waitingForOperand) {
-        const result = calculate(state.operand, current, state.operator);
-        state.display = formatNum(result);
-        state.operand = result;
-      } else {
-        state.operand = current;
-      }
-      state.operator = op;
-      state.waitingForOperand = true;
-      updateDisplay();
-    }
-
-    function calculate(a, b, op) {
-      switch (op) {
-        case '+': return a + b;
-        case '-': return a - b;
-        case '*': return a * b;
-        case '/': return b === 0 ? 'Error' : a / b;
-      }
-    }
-
-    function equals() {
-      if (state.operator === null || state.operand === null) return;
-      const current = parseFloat(state.display);
-      const result = calculate(state.operand, current, state.operator);
-      expressionEl.textContent = `${formatNum(state.operand)} ${{ '+': '+', '-': '−', '*': '×', '/': '÷' }[state.operator]} ${formatNum(current)} =`;
-      state.display = result === 'Error' ? 'Error' : formatNum(result);
-      state.operand = null;
-      state.operator = null;
-      state.waitingForOperand = true;
-      currentEl.textContent = state.display;
-    }
-
-    function clear() {
-      state = { display: '0', operand: null, operator: null, waitingForOperand: false };
-      updateDisplay();
-    }
-
-    document.querySelector('.buttons').addEventListener('click', (e) => {
-      const btn = e.target.closest('button');
-      if (!btn) return;
-
-      if (btn.dataset.digit !== undefined) {
-        inputDigit(btn.dataset.digit);
-      } else if (btn.dataset.op) {
-        chooseOperator(btn.dataset.op);
-      } else if (btn.dataset.action === 'equals') {
-        equals();
-      } else if (btn.dataset.action === 'clear') {
-        clear();
-      } else if (btn.dataset.action === 'sign') {
-        state.display = String(parseFloat(state.display) * -1);
-        updateDisplay();
-      } else if (btn.dataset.action === 'percent') {
-        state.display = String(parseFloat(state.display) / 100);
-        updateDisplay();
-      }
+    addBtn.addEventListener('click', addTodo);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') addTodo();
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key >= '0' && e.key <= '9') inputDigit(e.key);
-      else if (e.key === '.') inputDigit('.');
-      else if (e.key === '+') chooseOperator('+');
-      else if (e.key === '-') chooseOperator('-');
-      else if (e.key === '*') chooseOperator('*');
-      else if (e.key === '/') { e.preventDefault(); chooseOperator('/'); }
-      else if (e.key === 'Enter' || e.key === '=') equals();
-      else if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') clear();
-      else if (e.key === 'Backspace') {
-        if (state.display.length > 1) state.display = state.display.slice(0, -1);
-        else state.display = '0';
-        updateDisplay();
-      }
-    });
-
-    updateDisplay();
+    render();
   </script>
 </body>
 </html>

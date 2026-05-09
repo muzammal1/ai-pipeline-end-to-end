@@ -5,32 +5,16 @@ Attempts: 1
 > pipeline-tests@1.0.0 test
 > jest --testEnvironment jsdom --json --outputFile=test-run-raw.json --forceExit --verbose
 
-● Validation Warning:
-
-  Unknown option "setupFilesAfterFramework" with value ["@testing-library/jest-dom"] was found.
-  This is probably a typing mistake. Fixing it will remove this message.
-
-  Configuration Documentation:
-  https://jestjs.io/docs/configuration
-
-● Validation Warning:
-
-  Unknown option "setupFilesAfterFramework" with value ["@testing-library/jest-dom"] was found.
-  This is probably a typing mistake. Fixing it will remove this message.
-
-  Configuration Documentation:
-  https://jestjs.io/docs/configuration
-
 PASS tests/app.test.js
-  ✓ Display updates when digit buttons are clicked (77 ms)
-  ✓ Evaluate expression when equals button is pressed and show result (54 ms)
-  ✓ Clear button resets the display to zero (18 ms)
-  ✓ Basic operations work: addition, subtraction, multiplication, division (53 ms)
+  ✓ Add a todo item via a text input and a button (165 ms)
+  ✓ Mark a todo as complete with strikethrough styling (348 ms)
+  ✓ Delete a todo item (67 ms)
+  ✓ Show count of remaining incomplete items (55 ms)
 
 Test Suites: 1 passed, 1 total
 Tests:       4 passed, 4 total
 Snapshots:   0 total
-Time:        2.013 s, estimated 3 s
+Time:        4.944 s
 Ran all test suites.
 Test results written to: test-run-raw.json
 Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
