@@ -1,4 +1,4 @@
-Display updates when digit buttons are clicked
-Evaluate expression when equals button is pressed and show result
-Clear button resets the display to zero
-Basic operations work: addition, subtraction, multiplication, division
+City name and temperature are visible on load
+Weather condition with emoji icon is displayed
+High and low temperatures are shown
+Toggle button switches between Celsius and Fahrenheit correctly
