@@ -6,9 +6,6 @@
   },
   "jest": {
     "testEnvironment": "jsdom",
-    "setupFilesAfterFramework": [
-      "@testing-library/jest-dom"
-    ],
     "testMatch": [
       "**/tests/**/*.test.js"
     ]
