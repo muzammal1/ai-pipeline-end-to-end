@@ -9,7 +9,8 @@ from exceptions import PipelineError
 log = logging.getLogger("pipeline")
 
 _DONE_NAMES    = ["done", "closed", "complete", "resolved"]
-_BUG_NAMES     = ["bug reported", "in review", "needs review", "reopened", "blocked"]
+_REVIEW_NAMES  = ["in review", "review", "needs review"]
+_BUG_NAMES     = ["bug reported", "reopened", "blocked"]
 
 
 def close(issue_key: str, qa_status: str, deployment_url: str, pr_url: str, out_dir: str) -> None:
@@ -22,9 +23,28 @@ def close(issue_key: str, qa_status: str, deployment_url: str, pr_url: str, out_
 
 
 def _close_as_done(issue_key: str, deployment_url: str, pr_url: str) -> None:
-    tid = _find_transition(issue_key, _DONE_NAMES)
-    _jira("POST", f"/issue/{issue_key}/transitions", json={"transition": {"id": tid}})
-    log.info("[%s] Transitioned to Done", issue_key)
+    # Try direct Done transition first
+    tid = _find_transition(issue_key, _DONE_NAMES, fallback=None)
+    if tid:
+        _jira("POST", f"/issue/{issue_key}/transitions", json={"transition": {"id": tid}})
+        log.info("[%s] Transitioned directly to Done", issue_key)
+    else:
+        # Workflow requires In Review → Done (standard Scrum board)
+        review_tid = _find_transition(issue_key, _REVIEW_NAMES, fallback=None)
+        if review_tid:
+            _jira("POST", f"/issue/{issue_key}/transitions", json={"transition": {"id": review_tid}})
+            log.info("[%s] Transitioned to In Review (step 1/2)", issue_key)
+            done_tid = _find_transition(issue_key, _DONE_NAMES, fallback=None)
+            if done_tid:
+                _jira("POST", f"/issue/{issue_key}/transitions", json={"transition": {"id": done_tid}})
+                log.info("[%s] Transitioned to Done (step 2/2)", issue_key)
+            else:
+                log.info("[%s] Resting at In Review (Done not reachable from here)", issue_key)
+        else:
+            # Last resort — use whatever transition is available
+            fallback_tid = _find_transition(issue_key, _DONE_NAMES, fallback=_REVIEW_NAMES)
+            _jira("POST", f"/issue/{issue_key}/transitions", json={"transition": {"id": fallback_tid}})
+            log.info("[%s] Transitioned using fallback", issue_key)
 
     _comment(
         issue_key,
@@ -38,7 +58,7 @@ def _close_as_done(issue_key: str, deployment_url: str, pr_url: str) -> None:
 def _close_as_bug(
     issue_key: str, qa_status: str, deployment_url: str, pr_url: str, out_dir: str
 ) -> None:
-    tid = _find_transition(issue_key, _BUG_NAMES, fallback=_DONE_NAMES)
+    tid = _find_transition(issue_key, _BUG_NAMES, fallback=_REVIEW_NAMES + _DONE_NAMES)
     _jira("POST", f"/issue/{issue_key}/transitions", json={"transition": {"id": tid}})
     log.info("[%s] Transitioned to Bug Reported/In Review", issue_key)
 
@@ -58,7 +78,7 @@ def _close_as_bug(
     )
 
 
-def _find_transition(issue_key: str, preferred: list[str], fallback: list[str] | None = None) -> str:
+def _find_transition(issue_key: str, preferred: list[str], fallback: list[str] | None = None) -> str | None:
     data = _jira("GET", f"/issue/{issue_key}/transitions").json()
     transitions = data["transitions"]
 
@@ -67,15 +87,19 @@ def _find_transition(issue_key: str, preferred: list[str], fallback: list[str] |
             if name in t["name"].lower():
                 return t["id"]
 
-    if fallback:
-        for name in fallback:
-            for t in transitions:
-                if name in t["name"].lower():
-                    return t["id"]
+    if fallback is None:
+        available = [t["name"] for t in transitions]
+        log.debug("[%s] No match in %s. Available: %s", issue_key, preferred, available)
+        return None
+
+    for name in fallback:
+        for t in transitions:
+            if name in t["name"].lower():
+                return t["id"]
 
     available = [t["name"] for t in transitions]
     log.warning("[%s] No matching transition found. Available: %s — using first", issue_key, available)
-    return transitions[0]["id"]
+    return transitions[0]["id"] if transitions else None
 
 
 def _verify_not_in_progress(issue_key: str) -> None:
